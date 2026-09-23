@@ -1,0 +1,25 @@
+name: New collector or metric
+description: Propose a new integration or a new metric.
+labels: [enhancement]
+body:
+  - type: input
+    id: plugin
+    attributes:
+      label: Target plugin
+      placeholder: Name, link, and version
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Proposed metrics
+      description: Name, type (gauge, counter, histogram), labels, and what question each one answers.
+      placeholder: |
+        mc_example_things_total (counter, labels: kind) — how many things happened, by kind
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Where the data comes from
+      description: Public API, events, or reflection? Known version constraints?
