@@ -4,36 +4,35 @@ Prometheus metrics for Minecraft servers and proxies — Paper, Purpur, Folia, S
 
 VaniaMetrics is a small core plugin that serves `/metrics` over HTTP, plus one optional plugin per integration. Install the core, add only the collectors for the plugins you run, and point Prometheus at the server.
 
-Documentation, compatibility and the reference of every metric: **[vania-metrics.github.io](https://vania-metrics.github.io)**.
+The documentation lives on **[vania-metrics.github.io](https://vania-metrics.github.io)**: how to [get started](https://vania-metrics.github.io/guide/getting-started) and [configure it](https://vania-metrics.github.io/guide/configuration), which platforms [each collector supports](https://vania-metrics.github.io/compatibility), and [every metric](https://vania-metrics.github.io/metrics) with its labels.
 
 - **No runtime dependencies.** The core runs on the JDK alone: nothing shaded, nothing relocated.
 - **One jar per integration.** Each collector declares `depend: [VaniaMetrics]`, so a missing target plugin disables that collector cleanly instead of breaking the core.
 - **Bounded cardinality.** Per-player series have a hard cap, and rare values are folded away rather than exploding your TSDB.
-- **Tested on real servers.** Java 21, Minecraft 1.21.11: every platform a repository claims is started in a container and checked by its CI.
+- **Tested on real servers.** Java 21, Minecraft 1.21.11: every platform a repository claims is started in a container and checked by its CI, and the site shows the latest result.
 
-## Repositories
+## Collectors
 
-| Repository | What it measures |
+The core measures the JVM, the container (CPU, memory, disk), ticks, worlds, players and proxies. Each collector adds the metrics of one plugin, from its own repository, `collector-<name>`.
+
+| Plugin | What the collector measures |
 |---|---|
-| [core](https://github.com/Vania-Metrics/core) | JVM, cgroup, disk, TPS/MSPT, worlds, players, proxy — and the public API |
-| [collector-betonquest](https://github.com/Vania-Metrics/collector-betonquest) | BetonQuest conversations, journal entries, points and tags |
-| [collector-chunky](https://github.com/Vania-Metrics/collector-chunky) | Chunky pre-generation tasks |
-| [collector-essentials](https://github.com/Vania-Metrics/collector-essentials) | Economy balances, accounts and Gini coefficient; AFK players |
-| [collector-excellenteconomy](https://github.com/Vania-Metrics/collector-excellenteconomy) | ExcellentEconomy balances, transactions and money flow |
-| [collector-grim](https://github.com/Vania-Metrics/collector-grim) | GrimAC flags, setbacks and violation levels |
-| [collector-luckperms](https://github.com/Vania-Metrics/collector-luckperms) | LuckPerms groups, tracks, users, and online players by group |
-| [collector-multiverse](https://github.com/Vania-Metrics/collector-multiverse) | Multiverse-Core worlds |
-| [collector-mvinventories](https://github.com/Vania-Metrics/collector-mvinventories) | Multiverse-Inventories group switches |
-| [collector-mvportals](https://github.com/Vania-Metrics/collector-mvportals) | Multiverse-Portals usage |
-| [collector-mythicmobs](https://github.com/Vania-Metrics/collector-mythicmobs) | MythicMobs spawns, deaths and despawns |
-| [collector-nova](https://github.com/Vania-Metrics/collector-nova) | Nova tile entities |
-| [collector-packetevents](https://github.com/Vania-Metrics/collector-packetevents) | Packets, and players by protocol version |
-| [collector-phoenixcrates](https://github.com/Vania-Metrics/collector-phoenixcrates) | PhoenixCrates openings, keys, rewards and drop odds |
-| [collector-placeholder](https://github.com/Vania-Metrics/collector-placeholder) | Any PlaceholderAPI value, as a gauge |
-| [collector-spark](https://github.com/Vania-Metrics/collector-spark) | spark TPS, tick duration, CPU, GC, allocation rate and ping |
-| [collector-worldguard](https://github.com/Vania-Metrics/collector-worldguard) | WorldGuard regions and denied PvP |
-
-Which platforms and versions each one supports, and what its latest CI run found: **[compatibility](https://vania-metrics.github.io/compatibility)**.
+| [BetonQuest](https://vania-metrics.github.io/collectors/betonquest) | Conversations, journal entries, points and tags |
+| [Chunky](https://vania-metrics.github.io/collectors/chunky) | Pre-generation tasks |
+| [EssentialsX](https://vania-metrics.github.io/collectors/essentials) | Economy balances, accounts and Gini coefficient; AFK players |
+| [ExcellentEconomy](https://vania-metrics.github.io/collectors/excellenteconomy) | Balances, transactions and money flow |
+| [GrimAC](https://vania-metrics.github.io/collectors/grim) | Flags, setbacks and violation levels |
+| [LuckPerms](https://vania-metrics.github.io/collectors/luckperms) | Groups, tracks, users, and online players by group |
+| [Multiverse-Core](https://vania-metrics.github.io/collectors/multiverse) | Worlds |
+| [Multiverse-Inventories](https://vania-metrics.github.io/collectors/mvinventories) | Group switches |
+| [Multiverse-Portals](https://vania-metrics.github.io/collectors/mvportals) | Portal use |
+| [MythicMobs](https://vania-metrics.github.io/collectors/mythicmobs) | Spawns, deaths and despawns |
+| [Nova](https://vania-metrics.github.io/collectors/nova) | Tile entities |
+| [PacketEvents](https://vania-metrics.github.io/collectors/packetevents) | Packets, and players by protocol version |
+| [PhoenixCrates](https://vania-metrics.github.io/collectors/phoenixcrates) | Openings, keys, rewards and drop odds |
+| [PlaceholderAPI](https://vania-metrics.github.io/collectors/placeholder) | Any placeholder value, as a gauge |
+| [spark](https://vania-metrics.github.io/collectors/spark) | TPS, tick duration, CPU, GC, allocation rate and ping |
+| [WorldGuard](https://vania-metrics.github.io/collectors/worldguard) | Regions and denied PvP |
 
 ## Writing a collector
 
@@ -43,4 +42,4 @@ Metric names follow `mc_<domain>_<subject>`, base units (seconds, bytes), and Pr
 
 ## Status
 
-Pre-1.0: the API may still change between minor versions. Repositories are being prepared for public release.
+Version 0.6.0, for Minecraft 1.21.11. Pre-1.0: the API may still change between minor versions. The repositories stay private while they are prepared for public release; the documentation and the test results are public.
