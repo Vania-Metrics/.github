@@ -4,6 +4,8 @@ Prometheus metrics for Minecraft servers and proxies — Paper, Purpur, Folia, S
 
 VaniaMetrics is a small core plugin that serves `/metrics` over HTTP, plus one optional plugin per integration. Install the core, add only the collectors for the plugins you run, and point Prometheus at the server.
 
+Documentation, compatibility and the reference of every metric: **[vania-metrics.github.io](https://vania-metrics.github.io)**.
+
 - **No runtime dependencies.** The core runs on the JDK alone: nothing shaded, nothing relocated.
 - **One jar per integration.** Each collector declares `depend: [VaniaMetrics]`, so a missing target plugin disables that collector cleanly instead of breaking the core.
 - **Bounded cardinality.** Per-player series have a hard cap, and rare values are folded away rather than exploding your TSDB.
@@ -31,7 +33,7 @@ VaniaMetrics is a small core plugin that serves `/metrics` over HTTP, plus one o
 | [collector-spark](https://github.com/Vania-Metrics/collector-spark) | spark TPS, tick duration, CPU, GC, allocation rate and ping |
 | [collector-worldguard](https://github.com/Vania-Metrics/collector-worldguard) | WorldGuard regions and denied PvP |
 
-Which platforms and versions each one supports, and what its latest CI run found: **[compatibility and CI status](https://github.com/Vania-Metrics/.github/blob/status/README.md)**.
+Which platforms and versions each one supports, and what its latest CI run found: **[compatibility](https://vania-metrics.github.io/compatibility)**.
 
 ## Writing a collector
 

@@ -1,6 +1,7 @@
-# Called at the end of the CI of the core and of every collector, on main: records the run in the
-# status branch of this repository and rebuilds the page there (README.md), the compatibility and
-# CI status of every repository. Nothing here runs on its own.
+# Called at the end of the CI of the core and of every collector, on main: records the run, the
+# repository's manifest and what its sources declare in the data branch of
+# Vania-Metrics/vania-metrics.github.io, which rebuilds https://vania-metrics.github.io from it.
+# Nothing here runs on its own.
 #
 #   status:
 #     needs: ci
@@ -20,7 +21,7 @@ on:
         required: true
     secrets:
       STATUS_DEPLOY_KEY:
-        description: 'Deploy key of Vania-Metrics/.github, with write access'
+        description: 'Deploy key of Vania-Metrics/vania-metrics.github.io, with write access'
         required: true
 
 permissions:
@@ -33,14 +34,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      # The calling repository's manifest, at the commit that was tested.
+      # The calling repository at the commit that was tested: its manifest and its sources.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: repo
-          sparse-checkout: |
-            compatibility.yml
-            collector-test.yml
-          sparse-checkout-cone-mode: false
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,9 +48,9 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: Vania-Metrics/.github
-          ref: status
-          path: page
+          repository: Vania-Metrics/vania-metrics.github.io
+          ref: data
+          path: site-data
           ssh-key: ${{ secrets.STATUS_DEPLOY_KEY }}
       - name: Publish
         env:
@@ -66,19 +63,21 @@ jobs:
           if [ -f repo/collector-test.yml ]; then extra=(--collector-test repo/collector-test.yml); fi
           python3 tools/.github/status/collect.py --repo "$repo" --run-id "$GITHUB_RUN_ID" \
             --attempt "$GITHUB_RUN_ATTEMPT" --result "$RESULT" "${extra[@]}" > run.json
-          git -C page config user.name 'github-actions[bot]'
-          git -C page config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 tools/.github/status/extract.py repo > catalog.json
+          git -C site-data config user.name 'github-actions[bot]'
+          git -C site-data config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           # Every repository publishes here at the end of its CI, sometimes at the same moment:
           # start again from the branch as it is now until the push goes through.
           for attempt in 1 2 3 4 5 6 7 8; do
-            git -C page fetch --quiet --depth 1 origin status
-            git -C page reset --quiet --hard FETCH_HEAD
-            python3 tools/.github/status/render.py page --record run.json --manifest repo/compatibility.yml
-            git -C page add --all
-            if git -C page diff --cached --quiet; then exit 0; fi
-            git -C page commit --quiet --message "$repo: $GITHUB_WORKFLOW $RESULT at ${GITHUB_SHA::7}"
-            if git -C page push --quiet origin HEAD:status; then exit 0; fi
+            git -C site-data fetch --quiet --depth 1 origin data
+            git -C site-data reset --quiet --hard FETCH_HEAD
+            python3 tools/.github/status/store.py site-data --record run.json \
+              --manifest repo/compatibility.yml --catalog catalog.json
+            git -C site-data add --all
+            if git -C site-data diff --cached --quiet; then exit 0; fi
+            git -C site-data commit --quiet --message "$repo: $GITHUB_WORKFLOW $RESULT at ${GITHUB_SHA::7}"
+            if git -C site-data push --quiet origin HEAD:data; then exit 0; fi
             sleep $((5 + RANDOM % 20))
           done
-          echo "::error::could not push to the status branch"
+          echo "::error::could not push to the data branch"
           exit 1
