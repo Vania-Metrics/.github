@@ -1,35 +1,37 @@
 # VaniaMetrics
 
-Prometheus metrics for Minecraft servers — Paper and Velocity.
+Prometheus metrics for Minecraft servers and proxies — Paper, Purpur, Folia, Spigot, Sponge, Velocity, BungeeCord and Geyser.
 
 VaniaMetrics is a small core plugin that serves `/metrics` over HTTP, plus one optional plugin per integration. Install the core, add only the collectors for the plugins you run, and point Prometheus at the server.
 
 - **No runtime dependencies.** The core runs on the JDK alone: nothing shaded, nothing relocated.
 - **One jar per integration.** Each collector declares `depend: [VaniaMetrics]`, so a missing target plugin disables that collector cleanly instead of breaking the core.
 - **Bounded cardinality.** Per-player series have a hard cap, and rare values are folded away rather than exploding your TSDB.
-- **Java 21**, Paper 1.21+, Velocity 3.x.
+- **Tested on real servers.** Java 21, Minecraft 1.21.11: every platform a repository claims is started in a container and checked by its CI.
 
 ## Repositories
 
-| Repository | What it measures | Platforms |
-|---|---|---|
-| [core](https://github.com/Vania-Metrics/core) | JVM, cgroup, disk, TPS/MSPT, worlds, players, proxy — and the public API | Paper, Velocity |
-| [collector-betonquest](https://github.com/Vania-Metrics/collector-betonquest) | BetonQuest conversations, journal entries, points and tags | Paper |
-| [collector-chunky](https://github.com/Vania-Metrics/collector-chunky) | Chunky pre-generation tasks | Paper |
-| [collector-essentials](https://github.com/Vania-Metrics/collector-essentials) | Economy balances, accounts and Gini coefficient; AFK players | Paper |
-| [collector-excellenteconomy](https://github.com/Vania-Metrics/collector-excellenteconomy) | ExcellentEconomy balances, transactions and money flow | Paper |
-| [collector-grim](https://github.com/Vania-Metrics/collector-grim) | GrimAC flags, setbacks and violation levels | Paper |
-| [collector-luckperms](https://github.com/Vania-Metrics/collector-luckperms) | LuckPerms groups, tracks, users, and online players by group | Paper, Velocity |
-| [collector-multiverse](https://github.com/Vania-Metrics/collector-multiverse) | Multiverse-Core worlds | Paper |
-| [collector-mvinventories](https://github.com/Vania-Metrics/collector-mvinventories) | Multiverse-Inventories group switches | Paper |
-| [collector-mvportals](https://github.com/Vania-Metrics/collector-mvportals) | Multiverse-Portals usage | Paper |
-| [collector-mythicmobs](https://github.com/Vania-Metrics/collector-mythicmobs) | MythicMobs spawns, deaths and despawns | Paper |
-| [collector-nova](https://github.com/Vania-Metrics/collector-nova) | Nova tile entities | Paper |
-| [collector-packetevents](https://github.com/Vania-Metrics/collector-packetevents) | Packets, and players by protocol version | Paper, Velocity |
-| [collector-phoenixcrates](https://github.com/Vania-Metrics/collector-phoenixcrates) | PhoenixCrates openings, keys, rewards and drop odds | Paper |
-| [collector-placeholder](https://github.com/Vania-Metrics/collector-placeholder) | Any PlaceholderAPI value, as a gauge | Paper |
-| [collector-spark](https://github.com/Vania-Metrics/collector-spark) | spark TPS, tick duration, CPU, GC, allocation rate and ping | Paper, Velocity |
-| [collector-worldguard](https://github.com/Vania-Metrics/collector-worldguard) | WorldGuard regions and denied PvP | Paper |
+| Repository | What it measures |
+|---|---|
+| [core](https://github.com/Vania-Metrics/core) | JVM, cgroup, disk, TPS/MSPT, worlds, players, proxy — and the public API |
+| [collector-betonquest](https://github.com/Vania-Metrics/collector-betonquest) | BetonQuest conversations, journal entries, points and tags |
+| [collector-chunky](https://github.com/Vania-Metrics/collector-chunky) | Chunky pre-generation tasks |
+| [collector-essentials](https://github.com/Vania-Metrics/collector-essentials) | Economy balances, accounts and Gini coefficient; AFK players |
+| [collector-excellenteconomy](https://github.com/Vania-Metrics/collector-excellenteconomy) | ExcellentEconomy balances, transactions and money flow |
+| [collector-grim](https://github.com/Vania-Metrics/collector-grim) | GrimAC flags, setbacks and violation levels |
+| [collector-luckperms](https://github.com/Vania-Metrics/collector-luckperms) | LuckPerms groups, tracks, users, and online players by group |
+| [collector-multiverse](https://github.com/Vania-Metrics/collector-multiverse) | Multiverse-Core worlds |
+| [collector-mvinventories](https://github.com/Vania-Metrics/collector-mvinventories) | Multiverse-Inventories group switches |
+| [collector-mvportals](https://github.com/Vania-Metrics/collector-mvportals) | Multiverse-Portals usage |
+| [collector-mythicmobs](https://github.com/Vania-Metrics/collector-mythicmobs) | MythicMobs spawns, deaths and despawns |
+| [collector-nova](https://github.com/Vania-Metrics/collector-nova) | Nova tile entities |
+| [collector-packetevents](https://github.com/Vania-Metrics/collector-packetevents) | Packets, and players by protocol version |
+| [collector-phoenixcrates](https://github.com/Vania-Metrics/collector-phoenixcrates) | PhoenixCrates openings, keys, rewards and drop odds |
+| [collector-placeholder](https://github.com/Vania-Metrics/collector-placeholder) | Any PlaceholderAPI value, as a gauge |
+| [collector-spark](https://github.com/Vania-Metrics/collector-spark) | spark TPS, tick duration, CPU, GC, allocation rate and ping |
+| [collector-worldguard](https://github.com/Vania-Metrics/collector-worldguard) | WorldGuard regions and denied PvP |
+
+Which platforms and versions each one supports, and what its latest CI run found: **[compatibility and CI status](https://github.com/Vania-Metrics/.github/blob/status/README.md)**.
 
 ## Writing a collector
 
