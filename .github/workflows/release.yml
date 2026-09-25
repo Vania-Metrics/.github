@@ -1,0 +1,131 @@
+# The releases of the core and of every collector, called by their .github/workflows/release.yml
+# on every push to main.
+#
+# release-please keeps a release pull request up to date from the commit messages (feat: minor,
+# fix: patch; chore:, docs:, ci:, build:, test:, refactor: nothing). Merging it tags vX.Y.Z and
+# creates the GitHub release; the jars job then builds that commit and attaches the jars and
+# their SHA-512.
+#
+# Run by hand (publish-current), it publishes the version .release-please-manifest.json holds, as
+# it is: creates the release if it is missing and uploads the jars again. That is how 0.6.0
+# started, and the way out if an upload ever fails.
+#
+#   release:
+#     permissions: { contents: write, issues: write, pull-requests: write }
+#     uses: Vania-Metrics/.github/.github/workflows/release.yml@main
+#     with: { publish-current: "${{ github.event_name == 'workflow_dispatch' }}" }
+#     secrets: { CORE_DEPLOY_KEY: "${{ secrets.VANIA_CORE_DEPLOY_KEY }}" }
+name: release
+
+on:
+  workflow_call:
+    inputs:
+      publish-current:
+        description: 'Publish the current version as it is, without a release pull request'
+        type: boolean
+        default: false
+      with-core:
+        description: 'Check the core out into .core first, at the ref gradle.properties pins (collectors)'
+        type: boolean
+        default: true
+      build:
+        description: 'The command that builds the jars'
+        type: string
+        default: ./gradlew jar -PvaniaCore.dir=.core
+      jars:
+        description: 'Space-separated globs of the jars to attach; *-sources.jar are left out'
+        type: string
+        default: build/libs/*.jar
+    secrets:
+      CORE_DEPLOY_KEY:
+        description: 'Read-only deploy key of Vania-Metrics/core, for collectors'
+        required: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  please:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      release_created: ${{ steps.please.outputs.release_created }}
+      tag_name: ${{ steps.please.outputs.tag_name }}
+      sha: ${{ steps.please.outputs.sha }}
+    steps:
+      - id: please
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ github.token }}
+
+  jars:
+    needs: please
+    if: ${{ needs.please.outputs.release_created == 'true' || inputs.publish-current }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Release to publish
+        id: release
+        env:
+          CREATED_TAG: ${{ needs.please.outputs.tag_name }}
+          CREATED_SHA: ${{ needs.please.outputs.sha }}
+        run: |
+          if [ -n "$CREATED_TAG" ]; then
+            tag=$CREATED_TAG ref=$CREATED_SHA
+          else
+            version=$(gh api "repos/$GH_REPO/contents/.release-please-manifest.json?ref=$GITHUB_SHA" \
+              -H 'Accept: application/vnd.github.raw' | jq -r '."."')
+            tag=v$version
+            # A tag that already exists is released as it is; otherwise it goes on this commit.
+            ref=$(gh api "repos/$GH_REPO/commits/$tag" --jq .sha 2>/dev/null || echo "$GITHUB_SHA")
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.release.outputs.ref }}
+          persist-credentials: false
+      - name: Core version
+        id: core
+        if: ${{ inputs.with-core }}
+        run: echo "ref=$(sed -n 's/^vaniaCore\.ref=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ inputs.with-core }}
+        with:
+          repository: Vania-Metrics/core
+          ref: ${{ steps.core.outputs.ref }}
+          path: .core
+          ssh-key: ${{ secrets.CORE_DEPLOY_KEY }}
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+      - name: Build
+        run: ${{ inputs.build }}
+      - name: Attach the jars
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          REF: ${{ steps.release.outputs.ref }}
+          JARS: ${{ inputs.jars }}
+        run: |
+          shopt -s nullglob
+          mkdir dist
+          for glob in $JARS; do
+            for jar in $glob; do
+              case $jar in *-sources.jar) ;; *) cp "$jar" dist/ ;; esac
+            done
+          done
+          if [ -z "$(ls dist)" ]; then echo "::error::no jar matches: $JARS"; exit 1; fi
+          (cd dist && sha512sum *.jar > SHA512SUMS && cat SHA512SUMS)
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --target "$REF" --title "$TAG" \
+              --notes "First release published by the release workflow; the next ones carry their changelog."
+          fi
+          gh release upload "$TAG" dist/* --clobber

@@ -51,3 +51,16 @@ A platform is marked `yes` in `compatibility.yml` only once its cell passes; `un
 - One topic per PR, with a short description of what changes for server owners.
 - Mention any change to a metric name, label or config key explicitly.
 - Keep comments for the *why*; the code shows the *what*.
+
+## Commits and releases
+
+Commit messages start with a type, because releases are computed from them:
+
+| Type | Release |
+|---|---|
+| `feat:` | a minor version, listed under Features |
+| `fix:` | a patch version, listed under Bug Fixes |
+| `feat!:`, `fix!:` | a breaking change: still a minor version while we are before 1.0 |
+| `chore:`, `docs:`, `ci:`, `build:`, `test:`, `refactor:` | no release |
+
+Every repository versions itself: a collector's version is in `version.txt`, the core's in `Version.java`. On every push to `main`, release-please keeps a release pull request up to date with the next version and its changelog. Merging it tags `vX.Y.Z`, creates the GitHub release, and attaches the jars with their `SHA512SUMS`. The core version a collector is built against stays in its `gradle.properties` and `compatibility.yml`; moving to a new core is a `feat: core API x.y.z` commit.
