@@ -7,6 +7,7 @@ DIR is a checkout of the core or of a collector. What comes out:
   metrics      every family declared through MetricRegistry: full name, type, help, labels
   config       every key read through Config, with its default and its environment variable
   collector    the class implementing Collector: registered name, target, interval, javadoc
+  version      a collector's own version, from version.txt
   contract     for the core, the families of each capability profile, from the contract files
 
 Plain Java parsing, no compiler: every declaration names its metric with a string literal (the
@@ -161,6 +162,10 @@ def extract(root):
         'metrics': sorted(metrics.values(), key=lambda x: x['name']),
         'config': sorted(config.values(), key=lambda x: x['key']),
     }
+    # A collector's own version, kept by release-please; the core's is in its compatibility.yml.
+    version = root / 'version.txt'
+    if version.is_file():
+        catalog['version'] = version.read_text(encoding='utf-8').strip()
     if description:
         catalog['collector'] = description
     contract = root / 'common' / 'src' / 'test' / 'resources' / 'contract'
