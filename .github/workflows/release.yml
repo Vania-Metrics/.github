@@ -3,8 +3,8 @@
 #
 # release-please keeps a release pull request up to date from the commit messages (feat: minor,
 # fix: patch; chore:, docs:, ci:, build:, test:, refactor: nothing). Merging it tags vX.Y.Z and
-# creates the GitHub release; the jars job then builds that commit and attaches the jars and
-# their SHA-512.
+# creates the GitHub release; the jars job then builds that commit, attaches the jars and their
+# SHA-512, and publishes them on Modrinth (.github/release/modrinth.py) when given the token.
 #
 # Run by hand (publish-current), it publishes the version .release-please-manifest.json holds, as
 # it is: creates the release if it is missing and uploads the jars again. That is how 0.6.0
@@ -14,7 +14,9 @@
 #     permissions: { contents: write, issues: write, pull-requests: write }
 #     uses: Vania-Metrics/.github/.github/workflows/release.yml@main
 #     with: { publish-current: "${{ github.event_name == 'workflow_dispatch' }}" }
-#     secrets: { CORE_DEPLOY_KEY: "${{ secrets.VANIA_CORE_DEPLOY_KEY }}" }
+#     secrets:
+#       CORE_DEPLOY_KEY: "${{ secrets.VANIA_CORE_DEPLOY_KEY }}"
+#       MODRINTH_TOKEN: "${{ secrets.MODRINTH_TOKEN }}"
 name: release
 
 on:
@@ -39,6 +41,9 @@ on:
     secrets:
       CORE_DEPLOY_KEY:
         description: 'Read-only deploy key of Vania-Metrics/core, for collectors'
+        required: false
+      MODRINTH_TOKEN:
+        description: 'Publishes the jars on Modrinth too; without it, GitHub only'
         required: false
 
 permissions:
@@ -68,6 +73,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      # Whether there is a token, not the token: only the Modrinth step gets it.
+      MODRINTH: ${{ secrets.MODRINTH_TOKEN != '' }}
     steps:
       - name: Release to publish
         id: release
@@ -141,3 +148,23 @@ jobs:
             fi
           fi
           gh release upload "$TAG" dist/* --clobber
+      # The same jars on Modrinth, in the project of this repository: vania-metrics for the core,
+      # vania-metrics-<name> for a collector. A version already there is left as it is.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ env.MODRINTH == 'true' }}
+        with:
+          repository: Vania-Metrics/.github
+          ref: main
+          path: .tools
+          sparse-checkout: .github/release
+          persist-credentials: false
+      - name: Publish on Modrinth
+        if: ${{ env.MODRINTH == 'true' }}
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || pip install --quiet --break-system-packages pyyaml==6.0.3
+          gh release view "$TAG" --json body --jq .body > notes.md
+          python3 .tools/.github/release/modrinth.py --repo "${GH_REPO#*/}" --tag "$TAG" \
+            --dist dist --manifest compatibility.yml --notes notes.md
