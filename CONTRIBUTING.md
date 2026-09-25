@@ -68,7 +68,7 @@ The PR title, which becomes the commit message on `main`, starts with a type, be
 | `feat!:`, `fix!:` | a breaking change: still a minor version while we are before 1.0 |
 | `chore:`, `docs:`, `ci:`, `build:`, `test:`, `refactor:` | no release |
 
-Every repository versions itself: a collector's version is in `version.txt`, the core's in `Version.java`. On every merge into `main`, release-please keeps a release pull request up to date with the next version and its changelog. GitHub Actions opens it, so no CI runs on it: a maintainer merges it past the required check. Merging it tags `vX.Y.Z`, creates the GitHub release, and attaches the jars with their `SHA512SUMS`. The core version a collector is built against stays in its `gradle.properties` and `compatibility.yml`; moving to a new core is a `feat: core API x.y.z` commit.
+Every repository versions itself: a collector's version is in `version.txt`, the core's in `Version.java`. On every merge into `main`, release-please keeps a release pull request up to date with the next version and its changelog. GitHub Actions opens it, so no CI runs on it: a maintainer merges it past the required check. Merging it tags `vX.Y.Z`, creates the GitHub release, attaches the jars with their `SHA512SUMS`, and publishes them on [Modrinth](https://modrinth.com/organization/vania-metrics). The core version a collector is built against stays in its `gradle.properties` and `compatibility.yml`; moving to a new core is a `feat: core API x.y.z` commit.
 
 ## License
 
