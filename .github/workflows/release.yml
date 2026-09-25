@@ -132,7 +132,12 @@ jobs:
           if [ -z "$(ls dist)" ]; then echo "::error::no jar matches: $JARS"; exit 1; fi
           (cd dist && sha512sum *.jar > SHA512SUMS && cat SHA512SUMS)
           if ! gh release view "$TAG" > /dev/null 2>&1; then
-            gh release create "$TAG" --target "$REF" --title "$TAG" \
-              --notes "First release published by the release workflow; the next ones carry their changelog."
+            notes="First release published by the release workflow; the next ones carry their changelog."
+            if gh api "repos/$GH_REPO/git/ref/tags/$TAG" > /dev/null 2>&1; then
+              # The tag already exists (the core's were set by hand): release it as it is.
+              gh release create "$TAG" --verify-tag --title "$TAG" --notes "$notes"
+            else
+              gh release create "$TAG" --target "$REF" --title "$TAG" --notes "$notes"
+            fi
           fi
           gh release upload "$TAG" dist/* --clobber
