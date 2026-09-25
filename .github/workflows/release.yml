@@ -82,7 +82,14 @@ jobs:
               -H 'Accept: application/vnd.github.raw' | jq -r '."."')
             tag=v$version
             # A tag that already exists is released as it is; otherwise it goes on this commit.
-            ref=$(gh api "repos/$GH_REPO/commits/$tag" --jq .sha 2>/dev/null || echo "$GITHUB_SHA")
+            # On a 404, gh api still prints the error body: trust its exit status, not its output.
+            if ! ref=$(gh api "repos/$GH_REPO/commits/$tag" --jq .sha 2>/dev/null); then
+              ref=$GITHUB_SHA
+            fi
+          fi
+          if ! [[ $ref =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::not a commit: $ref"
+            exit 1
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
