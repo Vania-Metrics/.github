@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/Vania-Metrics/core/main/icon.png" alt="" width="96" align="right">
+<img src="icon.png" alt="" width="96" align="right">
 
 # VaniaMetrics
 
