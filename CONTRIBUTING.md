@@ -36,7 +36,7 @@ The core's testkit starts every platform a repository's `compatibility.yml` clai
 ./gradlew :vania-metrics-testkit:integrationTest                                       # the core
 ```
 
-A platform is marked `yes` in `compatibility.yml` only once its cell passes; `untested` cells run without failing the build. CI runs the same tests on every push to `main` and publishes the results on the [compatibility page](https://vania-metrics.github.io/compatibility).
+A platform is marked `yes` in `compatibility.yml` only once its cell passes; `untested` cells run without failing the build. CI runs the same tests on every pull request and every push to `main`; the results of `main` are published on the [compatibility page](https://vania-metrics.github.io/compatibility).
 
 ## Rules that matter
 
@@ -48,13 +48,18 @@ A platform is marked `yes` in `compatibility.yml` only once its cell passes; `un
 
 ## Pull requests
 
+`main` only takes pull requests, in every repository. Members push branches to the organization's repositories; everyone else works from a fork.
+
 - One topic per PR, with a short description of what changes for server owners.
 - Mention any change to a metric name, label or config key explicitly.
 - Keep comments for the *why*; the code shows the *what*.
+- The PR is squash-merged: its **title becomes the commit message** on `main`, so it starts with a type (below), and its description becomes the commit body.
+- Merging needs one approving review from a member, every conversation resolved, and a green CI: `build` in the core, `ci / collector` in a collector, the real-server tests. A push after the approval needs a new one. A fork's workflow runs wait for a maintainer to approve them.
+- Every commit on `main` has a verified signature: the squash commit is signed by GitHub. Signing your own commits is welcome, not required.
 
 ## Commits and releases
 
-Commit messages start with a type, because releases are computed from them:
+The PR title, which becomes the commit message on `main`, starts with a type, because releases are computed from it:
 
 | Type | Release |
 |---|---|
@@ -63,4 +68,8 @@ Commit messages start with a type, because releases are computed from them:
 | `feat!:`, `fix!:` | a breaking change: still a minor version while we are before 1.0 |
 | `chore:`, `docs:`, `ci:`, `build:`, `test:`, `refactor:` | no release |
 
-Every repository versions itself: a collector's version is in `version.txt`, the core's in `Version.java`. On every push to `main`, release-please keeps a release pull request up to date with the next version and its changelog. Merging it tags `vX.Y.Z`, creates the GitHub release, and attaches the jars with their `SHA512SUMS`. The core version a collector is built against stays in its `gradle.properties` and `compatibility.yml`; moving to a new core is a `feat: core API x.y.z` commit.
+Every repository versions itself: a collector's version is in `version.txt`, the core's in `Version.java`. On every merge into `main`, release-please keeps a release pull request up to date with the next version and its changelog. GitHub Actions opens it, so no CI runs on it: a maintainer merges it past the required check. Merging it tags `vX.Y.Z`, creates the GitHub release, and attaches the jars with their `SHA512SUMS`. The core version a collector is built against stays in its `gradle.properties` and `compatibility.yml`; moving to a new core is a `feat: core API x.y.z` commit.
+
+## License
+
+Every repository is under the GNU General Public License v3.0, in its `LICENSE` file. By contributing, you agree that your contribution is released under it.

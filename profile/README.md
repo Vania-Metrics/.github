@@ -42,4 +42,4 @@ Metric names follow `mc_<domain>_<subject>`, base units (seconds, bytes), and Pr
 
 ## Status
 
-Version 0.6.0, for Minecraft 1.21.11. Pre-1.0: the API may still change between minor versions. The repositories stay private while they are prepared for public release; the documentation and the test results are public.
+Core 0.6.0, for Minecraft 1.21.11; each collector has its own version and releases. Pre-1.0: the API may still change between minor versions. Everything is open source, under the [GPL-3.0](https://github.com/Vania-Metrics/core/blob/main/LICENSE).
